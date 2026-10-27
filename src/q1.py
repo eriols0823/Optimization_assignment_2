@@ -38,7 +38,7 @@ def validate(com) -> bool:
     X = []
     for method in (0, 1, 2):
         mod = CommunityModel(com, "R")
-        mod.m.Params.Method = method
+        mod.gurobi.Params.Method = method
         X.append(mod.solve().exceedance)
     ok.append(_check(min(X) - 0.05 <= ref["exceedance_kWh"] <= max(X) + 0.05,
                      f"energy above the cap {min(X):.2f} to {max(X):.2f} kWh over tied optima "
