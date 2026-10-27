@@ -5,6 +5,8 @@
     python main.py --day d4                          # another day of the week (and that day's cap)
     python main.py --members                         # also print every member's Assignment 1 summary
     python main.py --demo                            # also run the scenario-generation demonstration (Question 3)
+    python main.py --q1 validate                     # Question 1: validation checks of the models R, I and C
+    python main.py --q1 base                         # Question 1: base-case table (results/<community>/)
 
 No model is provided: build your Assignment 1 model class on the ``InputData`` of each member, then the community
 models of the assignment (R, I, C, DP, ...) on top of it, one function per experiment, writing to ``results/``.
@@ -25,6 +27,7 @@ def main() -> None:
     ap.add_argument("--day", default="d1", help="d1 (base case) ... d7")
     ap.add_argument("--members", action="store_true", help="print the Assignment 1 summary of every member")
     ap.add_argument("--demo", action="store_true", help="run the scenario-generation demonstration")
+    ap.add_argument("--q1", choices=["validate", "base"], help="Question 1 experiment to run")
     args = ap.parse_args()
 
     com = load_community(args.community, day=args.day)
@@ -40,6 +43,13 @@ def main() -> None:
     if args.demo:
         import runpy
         runpy.run_module("src.scenario_generation", run_name="__main__")
+    if args.q1:
+        from src import q1
+        print()
+        if args.q1 == "validate":
+            q1.validate(com)
+        else:
+            q1.base_case(com, RESULTS_DIR / args.community)
 
 
 if __name__ == "__main__":
