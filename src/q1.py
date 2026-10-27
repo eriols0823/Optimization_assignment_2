@@ -87,8 +87,29 @@ def validate(com) -> bool:
     return all(ok)
 
 
+def _drivers(com, r, R) -> dict:
+    """What drives the result of one model: disutility per load class, penalties by PV ownership (I only),
+    the hours above the cap and the tariff income the DSO gives up per kWh of congestion removed."""
+    mem = {m.consumer_id: m for m in com.members}
+    out = {f"disutility L{k} [DKK]": 0.0 for k in (1, 2, 3, 4)}
+    for cid, s in r.schedule.items():
+        out[f"disutility L{mem[cid].slope_class} [DKK]"] += mem[cid].linear_disutility * (s["d_plus"] + s["d_minus"]).sum()
+    if "q_exc" in next(iter(r.schedule.values())):          # penalties are paid per member only in I
+        alpha = com.contract.penalty_DKK_per_kWh
+        for label, pv in (("with PV", True), ("without PV", False)):
+            out[f"penalty {label} [DKK]"] = sum(alpha * s["q_exc"].sum()
+                                                for cid, s in r.schedule.items() if mem[cid].has_pv == pv)
+    income = r.cost["tariffs"] + r.cost["penalty"]
+    removed = R.exceedance - r.exceedance
+    out["DSO income [DKK]"] = income
+    out["DSO cost per kWh removed [DKK/kWh]"] = (R.cost["tariffs"] + R.cost["penalty"] - income) / removed if removed > 0 else None
+    out = {k: round(float(v), 2) if v is not None else None for k, v in out.items()}
+    out["hours above cap"] = " ".join(str(h) for h in np.where(r.feeder_import > r.cap + 1e-6)[0])
+    return out
+
+
 def base_case(com, out_dir: Path) -> pd.DataFrame:
-    """Base-case comparison of R, I and C. Prints two tables and saves them as CSV files in out_dir."""
+    """Base-case comparison of R, I and C. Prints four tables and saves them as CSV files in out_dir."""
     res = {name: CommunityModel(com, name).solve() for name in ("R", "I", "C")}
     R, I = res["R"], res["I"]
 
@@ -109,10 +130,16 @@ def base_case(com, out_dir: Path) -> pd.DataFrame:
         for name, r in res.items()
     }).T.round(2)
     parts = pd.DataFrame({name: r.cost for name, r in res.items()}).T.round(2)
+    change = (parts - parts.loc["R"]).round(2)
+    drivers = pd.DataFrame({name: _drivers(com, r, R) for name, r in res.items()})
 
     out_dir.mkdir(parents=True, exist_ok=True)
     summary.to_csv(out_dir / "q1_base_case.csv")
     parts.to_csv(out_dir / "q1_cost_parts.csv")
-    print("Base case\n", summary.to_string(), "\n\nCommunity cost by part [DKK]\n", parts.to_string(), sep="")
+    change.to_csv(out_dir / "q1_cost_change.csv")
+    drivers.to_csv(out_dir / "q1_drivers.csv")
+    print("Base case\n", summary.to_string(), "\n\nCommunity cost by part [DKK]\n", parts.to_string(),
+          "\n\nChange of each cost part compared with R [DKK]\n", change.to_string(),
+          "\n\nWhat drives the results\n", drivers.to_string(), sep="")
     print(f"\nSaved to {out_dir}")
     return summary
