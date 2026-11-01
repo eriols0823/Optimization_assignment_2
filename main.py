@@ -7,6 +7,8 @@
     python main.py --demo                            # also run the scenario-generation demonstration (Question 3)
     python main.py --q1 validate                     # Question 1: validation checks of the models R, I and C
     python main.py --q1 base                         # Question 1: base-case table (results/<community>/)
+    python main.py --q1 sweep                        # Question 1: sensitivity to the cap and the discount
+    python main.py --q1 settlement                   # Question 1: dual settlement of C and the manager's budget
 
 No model is provided: build your Assignment 1 model class on the ``InputData`` of each member, then the community
 models of the assignment (R, I, C, DP, ...) on top of it, one function per experiment, writing to ``results/``.
@@ -27,7 +29,7 @@ def main() -> None:
     ap.add_argument("--day", default="d1", help="d1 (base case) ... d7")
     ap.add_argument("--members", action="store_true", help="print the Assignment 1 summary of every member")
     ap.add_argument("--demo", action="store_true", help="run the scenario-generation demonstration")
-    ap.add_argument("--q1", choices=["validate", "base"], help="Question 1 experiment to run")
+    ap.add_argument("--q1", choices=["validate", "base", "sweep", "settlement"], help="Question 1 experiment to run")
     args = ap.parse_args()
 
     com = load_community(args.community, day=args.day)
@@ -48,8 +50,12 @@ def main() -> None:
         print()
         if args.q1 == "validate":
             q1.validate(com)
-        else:
+        elif args.q1 == "base":
             q1.base_case(com, RESULTS_DIR / args.community)
+        elif args.q1 == "settlement":
+            q1.settlement(com, RESULTS_DIR / args.community)
+        else:
+            q1.sweep(com, RESULTS_DIR / args.community)
 
 
 if __name__ == "__main__":
