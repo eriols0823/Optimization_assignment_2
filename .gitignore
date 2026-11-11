@@ -5,3 +5,18 @@ results/
 venv/
 .venv/
 .DS_Store
+
+# LaTeX build files (the report sources live in Report_LaTeX/)
+*.aux
+*.log
+*.out
+*.toc
+*.nlo
+*.nls
+*.ilg
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+Report_LaTeX/_xetest.*

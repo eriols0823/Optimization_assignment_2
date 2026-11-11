@@ -1,0 +1,269 @@
+\documentclass[12pt,oneside,a4paper,english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin2]{inputenc}
+\usepackage[margin=2.25cm,headheight=26pt,includeheadfoot]{geometry}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{titlesec}
+\usepackage{titling}
+\usepackage[framed, numbered]{matlab-prettifier}
+\usepackage{changepage}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{caption}
+\usepackage{tocloft}
+\usepackage{setspace}
+\usepackage{multirow}
+\usepackage{titling}
+\usepackage{float}
+\usepackage{comment}
+\usepackage{booktabs}
+\usepackage{indentfirst}
+\usepackage{lscape}
+\usepackage{booktabs,caption}
+\usepackage[flushleft]{threeparttable}
+\usepackage[english,intoc]{nomencl}
+\usepackage{xcolor}
+\usepackage{lipsum}
+\usepackage{tabularx}
+
+% --- handy macros for this assignment ---
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\qimp}[1][t]{q^{\mathrm{imp}}_{#1}}
+\newcommand{\qexp}[1][t]{q^{\mathrm{exp}}_{#1}}
+\newcommand{\pimp}[1][t]{p^{\mathrm{imp}}_{#1}}        % effective import price
+\newcommand{\pexp}[1][t]{p^{\mathrm{exp}}_{#1}}        % effective export price
+\newcommand{\cpv}{c^{\mathrm{PV}}}
+\newcommand{\Emin}{E^{\min}}
+\newcommand{\lref}[1][t]{\hat{\ell}_{#1}}
+\newcommand{\uL}{u^{L}}
+\newcommand{\load}[1][t]{\ell_{#1}}
+\newcommand{\pvprod}[1][t]{q^{\mathrm{PV}}_{#1}}
+\newcommand{\Lmin}{L^{\min}}
+\newcommand{\Lmax}{L^{\max}}
+\newcommand{\PVmax}[1][t]{PV_{#1}^{\max}}
+\newcommand{\tauexp}{\tau^{\mathrm{exp}}}
+\newcommand{\tauimp}{\tau^{\mathrm{imp}}}
+% dual variables of the hourly problem (Question 1.(b))
+\newcommand{\lbal}[1][t]{\lambda_{#1}}
+\newcommand{\muLlo}[1][t]{\underline{\mu}^{L}_{#1}}
+\newcommand{\muLup}[1][t]{\overline{\mu}^{L}_{#1}}
+\newcommand{\muPVlo}[1][t]{\underline{\mu}^{\mathrm{PV}}_{#1}}
+\newcommand{\muPVup}[1][t]{\overline{\mu}^{\mathrm{PV}}_{#1}}
+\newcommand{\muimp}[1][t]{\mu^{\mathrm{imp}}_{#1}}
+\newcommand{\muexp}[1][t]{\mu^{\mathrm{exp}}_{#1}}
+% multiplier of the minimum daily energy constraint (Question 3.(b)); one for the whole day
+\newcommand{\muE}{\mu^{E}}
+% battery of Question 3.(g)
+\newcommand{\Ebat}{E^{\mathrm{bat}}}
+\newcommand{\Pch}{P^{\mathrm{ch}}}
+\newcommand{\Pdis}{P^{\mathrm{dis}}}
+\newcommand{\etach}{\eta^{\mathrm{ch}}}
+\newcommand{\etadis}{\eta^{\mathrm{dis}}}
+\newcommand{\einit}{e^{\mathrm{init}}}
+\newcommand{\pch}[1][t]{p^{\mathrm{ch}}_{#1}}
+\newcommand{\pdis}[1][t]{p^{\mathrm{dis}}_{#1}}
+\newcommand{\soc}[1][t]{e_{#1}}
+\newcommand{\piend}{\pi^{\mathrm{end}}}
+
+% --- nomenclature: all symbols are declared in sources/9_nomenclat.tex, with their units
+\makenomenclature
+
+
+% --- set footer and header ---
+\pagestyle{fancy}
+\fancyhf{}
+
+% no first-line indent; paragraphs are separated by a small vertical gap instead
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em plus 0.1em}
+\title{46750 - Optimization in Modern Power Systems - Assignment 2} % to reference as \title, dont use \maketitle
+\makeatletter\let\Title\@title\makeatother
+
+% Code listings: Python (the recommended starter code is Python)
+\lstset{language=Python,
+basicstyle=\small\ttfamily,
+keywordstyle=\color{blue},
+commentstyle=\color{gray},
+numbers=left,
+numberstyle={\scriptsize\color{black}},
+numbersep=0.5cm,
+frame=single,
+breaklines=true,
+showstringspaces=false
+}
+
+\newlist{steps}{enumerate}{1}
+\setlist[steps, 1]{leftmargin=1.5cm,label = Step \arabic*:}
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\footrulewidth}{1pt}
+\usepackage{xltabular}
+
+\newcommand{\todo}[1]{{\color{red}\bfseries [TODO: #1]}}
+% --- End of page settings ---
+
+
+%\lhead{\Title}
+\rhead{\nouppercase{\leftmark}} % \leftmark = current \section ("Question 1"); \rightmark = current \subsection
+\lhead{\Title}
+\rfoot{\includegraphics[height=1.25cm]{root/logo.pdf}} % right header logo
+\setlength\headheight{16pt}
+\setlength{\footskip}{50pt}
+\lhead{\Title} %rightH title
+\cfoot{\thepage}
+
+% --- End of page settings ---
+
+
+
+\begin{document}
+\pagenumbering{roman} 
+\input{sources/0_frontpage.tex}
+
+\newpage 
+
+
+\newpage
+\doublespacing
+%\addcontentsline{toc}{section}{Table of Contents}
+\renewcommand{\baselinestretch}{1}\normalsize
+\tableofcontents
+\renewcommand{\baselinestretch}{1}\normalsize
+%\singlespacing
+\thispagestyle{fancy} % force page style
+
+\newpage
+
+\section*{Group participation table}
+\addcontentsline{toc}{section}{Group participation table}
+% Fill in the contribution of each student, in percent, to each grading criterion and to the
+% assignment as a whole. Each of the four criterion columns sums to 100%. The "Overall" column
+% reflects the share of the total time spent by each student and need NOT be a weighted average of
+% the criterion columns, since the criteria differ in the time they require. The overall share is
+% the one used for the individual grade adjustment (see the assignment text).
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabular}{l>{\centering\arraybackslash}p{2.7cm}>{\centering\arraybackslash}p{1.8cm}>{\centering\arraybackslash}p{1.8cm}>{\centering\arraybackslash}p{2.2cm}>{\centering\arraybackslash}p{1.8cm}}
+    \toprule
+    \textbf{Student} & \textbf{Mathematical models} & \textbf{Writing} & \textbf{Code} & \textbf{Numerical results} & \textbf{Overall} \\
+    \midrule
+    Alejandro & 34\,\% & 25\,\% & 43\,\% & 18\,\% & 29\,\% \\
+    Erik Olsson & 23\,\% & 30\,\% & 14\,\% & 37\,\% & 28\,\% \\
+    Ignacio & 31\,\% & 28\,\% & 33\,\% & 43\,\% & 28\,\% \\
+    \textbf{Sum} & 100\,\% & 100\,\% & 100\,\% & 100\,\% & 100\,\% \\
+    \bottomrule
+  \end{tabular}
+  \caption{The percentages are based from all the questions, including the bonus question. Contribution of each group member to each grading criterion and to the assignment overall (in \% of the group total). The overall column reflects the time spent and is not a weighted average of the criterion columns.}
+  \label{tab:participation}
+\end{table}
+
+% ------------------------------------------------------------ AI use disclosure
+\section*{AI use disclosure}
+\addcontentsline{toc}{section}{AI use disclosure}
+% State which AI tools were used (e.g. ChatGPT, Claude, GitHub Copilot), for which tasks
+% (e.g. debugging, code documentation, proofreading, brainstorming, plotting), and how the group
+% checked the output (e.g. re-derived by hand, tested against a closed-form solution).
+% Write "No AI tool was used." if that is the case. Using AI tools is allowed; not disclosing it is not.
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{Tool} & \textbf{Used for} & \textbf{How the output was verified} \\
+    \midrule
+        Claude (Claude Code and web)
+    &
+    Repository set-up; assistance writing and debugging the code; LaTeX typesetting, wording of
+    the group's text and merging of drafts; explaining the brief and course concepts,
+    discussing modeling choices and derivations.
+    &
+    Modelling choices were made by the group; derivations were checked by hand; LaTeX and code
+    were compiled, run and checked by the group against the formulation.
+    \\
+    \midrule
+    Gemini (Google)
+    &
+    Transcription of handwritten notes into typed text.
+    &
+    Checked against the handwritten originals and the lecture notes.
+    \\
+    \bottomrule
+  \end{tabularx}
+  \caption{AI tools used in this assignment.}
+  \label{tab:ai}
+\end{table}
+
+\newpage 
+\pagenumbering{arabic} 
+\fancyfoot[C]{Page \thepage\ of \pageref{EndOfText}}
+
+
+
+\newpage
+% \printnomenclature (inside 9_nomenclat) prints its own "Nomenclature" heading, and the
+% `intoc` option of the package adds it to the table of contents.
+\input{sources/9_nomenclat}
+
+\newpage
+\section{Question 1}
+\input{sources/1_}
+
+\newpage
+\section{Question 2}
+\input{sources/2_}
+
+\newpage
+\section{Question 3}
+\input{sources/3_}
+
+\newpage
+\section{Appendix A} \label{ch6}
+
+All input data of the base cases are those of the repository. The table below lists the values
+that were chosen by the group. They are also set in the source code
+(\texttt{main.py} and \texttt{src/}), so every result can be reproduced with the commands given in
+each section.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Question} & \textbf{Parameter} & \textbf{Chosen values} \\
+\midrule
+2.(b).iv & Sweep of $c^{L}$ & 0.005 to 3.195~DKK/kWh in steps of 0.01 (offset by 0.005 so that no run lies on a price threshold) \\
+2.(c).iv & Sweep of $c^{Q}$ & 0.01 to 3.20~DKK/kWh$^2$ in steps of 0.01 \\
+2.(d) & Scenarios & Base: $c^{L} = 1.43$~DKK/kWh, $c^{Q} = 1.00$~DKK/kWh$^2$; low: $c^{L} = c^{Q} = 0.50$; high: $c^{L} = c^{Q} = 3.20$; Question~1 model with $\uL = c^{L}$ \\
+2.(e) & Disutility parameters & $\rho = 0.8$, $c^{Q} = 0.05$~DKK/kWh$^2$, $c^{S} = 0.06$~DKK/kWh$^2$ \\
+2.(e).iv & Price profiles & Mean of the base prices (1.32~DKK/kWh); flat; alternating $\pm 0.8$~DKK/kWh every hour; blocks of 4~h at $\pm 0.8$~DKK/kWh \\
+\midrule
+3.(f) & $\Emin$ & 0 to 140~kWh in steps of 5 \\
+3.(f) & $c^{Q}$ & 0.1 to 5~DKK/kWh$^2$ in steps of 0.1 (with $\Emin = 40$~kWh) \\
+3.(f) & $\Lmax$ & 1.7 to 8~kWh/h in steps of 0.1 (with $\Emin = 40$~kWh) \\
+\midrule
+3.(g).i & Morning peak of $D+1$ & Searched in hours 0--11 of the following day, \eqref{eq:g_piend} \\
+3.(g).v & Price spread & 0, 0.5, 1, 1.5, 2 times the base spread, same mean, on both days \\
+3.(g).v & Price level & $-0.5$, 0, 0.5, 1.0~DKK/kWh added to all prices, on both days \\
+3.(g).v & $c^{Q}$ & 0.02, 0.1, 0.3, 1, 3, 10~DKK/kWh$^2$ \\
+3.(g).v & Capacity $\Ebat$ & 1, 2, 4, 8, 16~kWh, with $\einit$ at 50\,\% of it \\
+3.(g).v & Power $\Pch = \Pdis$ & 0.5, 1, 1.5, 3, 6~kW \\
+3.(g).v & Efficiency $\etach = \etadis$ & 0.80, 0.85, 0.90, 0.95, 1.00 \\
+3.(g).v & End of the day & Trend $\pimp[23] + (\pimp[23] - \pimp[22])$; last price $\pimp[23]$; $\pimp[23]/\etach$; free end; cyclic; $\piend$ from 1.40 to 2.00~DKK/kWh in steps of 0.01 \\
+3.(g).v & Benchmark & Day $D$ and hours 0--10 of $D+1$; $\Emin$ on day $D$ only; no value for the energy left at the end \\
+\bottomrule
+\end{tabularx}
+\caption{Values chosen by the group.}
+\label{tab:appendix}
+\end{table}
+
+\input{sources/A_q2_kkt}
+
+
+\label{endOfDoc}
+\label{EndOfText}
+\end{document}

@@ -1,0 +1,31 @@
+% Appendix: KKT conditions and dual objective of the member's problem (Question 2), as implemented in
+% src/pricing.py (add_member_kkt). Member index i dropped; t in T; e_{-1} = e^init.
+\subsection*{KKT conditions of the member's problem (Question 2)}\label{app:kkt_member}
+The duals of~\eqref{eq:DP_member} are $\nu_t$ (free) for~\eqref{eq:dev}, $\mu^E\geq0$ for~\eqref{eq:emin}, $\underline{\mu}^L_t,\overline{\mu}^L_t\geq0$ for the bounds~\eqref{eq:lbounds}, $\underline{\mu}^{\mathrm{PV}}_t,\overline{\mu}^{\mathrm{PV}}_t\geq0$ for~\eqref{eq:pv}, $\psi_t$ (free) for~\eqref{eq:soc}, $\underline{\mu}^{\mathrm{ch}}_t,\overline{\mu}^{\mathrm{ch}}_t,\underline{\mu}^{\mathrm{dis}}_t,\overline{\mu}^{\mathrm{dis}}_t,\underline{\mu}^{e}_t,\overline{\mu}^{e}_t\geq0$ for~\eqref{eq:batbounds} and $\mu^{\mathrm{end}}\geq0$ for~\eqref{eq:eod}.
+With $q_t$ substituted by~\eqref{eq:net}, stationarity reads
+\begin{align*}
+&\ell_t: && x_t-\nu_t-\mu^E-\underline{\mu}^L_t+\overline{\mu}^L_t=0, \qquad
+d^{+}_t,\ d^{-}_t:\ \ 0\leq d^{\pm}_t\perp c^L\pm\nu_t\geq0,\\
+&q^{\mathrm{PV}}_t: && -x_t+c^{\mathrm{PV}}-\underline{\mu}^{\mathrm{PV}}_t+\overline{\mu}^{\mathrm{PV}}_t=0,\\
+&p^{\mathrm{ch}}_t,\ p^{\mathrm{dis}}_t: && x_t+\eta^{\mathrm{ch}}\psi_t-\underline{\mu}^{\mathrm{ch}}_t+\overline{\mu}^{\mathrm{ch}}_t=0, \qquad
+-x_t-\psi_t/\eta^{\mathrm{dis}}-\underline{\mu}^{\mathrm{dis}}_t+\overline{\mu}^{\mathrm{dis}}_t=0,\\
+&e_t: && -\psi_t+\psi_{t+1}-\underline{\mu}^{e}_t+\overline{\mu}^{e}_t=0\ \ (t<23), \qquad -\psi_{23}-\mu^{\mathrm{end}}-\underline{\mu}^{e}_{23}+\overline{\mu}^{e}_{23}=0,
+\end{align*}
+together with primal feasibility and the complementarity of every inequality with its dual, e.g.\ $0\leq\ell_t-\ell^{\mathrm{lo}}_t\perp\underline{\mu}^L_t\geq0$ and $0\leq\sum_t\ell_t-E^{\min}\perp\mu^E\geq0$, where $\ell^{\mathrm{lo}}_t$ and $\ell^{\mathrm{up}}_t$ are the two sides of~\eqref{eq:lbounds}.
+The dual objective, equal to the member's optimal cost $J^{\mathcal{DP}}_i=\Pi_i+K_i$ by strong duality, is
+\begin{multline*}
+\Phi=\sum_t\Big(\nu_t\hat{\ell}_t+\underline{\mu}^L_t\ell^{\mathrm{lo}}_t-\overline{\mu}^L_t\ell^{\mathrm{up}}_t-\overline{\mu}^{\mathrm{PV}}_tPV^{\max}_t\Big)\\
+-\sum_t\Big(\overline{\mu}^{\mathrm{ch}}_tP^{\mathrm{ch}}+\overline{\mu}^{\mathrm{dis}}_tP^{\mathrm{dis}}+\overline{\mu}^{e}_tE^{\mathrm{bat}}\Big)+\mu^EE^{\min}+(\psi_0+\mu^{\mathrm{end}})\,e^{\mathrm{init}} .
+\end{multline*}
+It contains no price, which is why it linearizes the payments in~\eqref{eq:DP_BB} and~\eqref{eq:DP_IR}.
+
+\paragraph{Big-M constants.}
+Each complementarity pair $0\leq a\perp b\geq0$ becomes $a\leq M^{\mathrm{P}}u$, $b\leq M^{\mathrm{D}}(1-u)$ with $u$ binary.
+The primal constants follow from $\mathcal{X}_i$ (e.g.\ $M^{\mathrm{P}}=\ell^{\mathrm{up}}_t-\ell^{\mathrm{lo}}_t$ for the load bounds).
+For the load and the PV, the dual constants are not guessed but derived from the conditions above, given $0\leq x_t\leq\overline{x}$.
+Dual feasibility of $d^{\pm}_t$ gives $|\nu_t|\leq c^L$, so both reduced costs lie in $[0,2c^L]$.
+If $\mu^E$ exceeded $\overline{x}+c^L$, stationarity would force $\overline{\mu}^L_t>0$, hence $\ell_t=\ell^{\mathrm{up}}_t$, in every hour, and the daily minimum would be slack, contradicting $\mu^E>0$; therefore $\mu^E\leq\overline{x}+c^L$.
+Since the two bounds of $\ell_t$ never coincide, at most one of their duals is positive, which gives $\underline{\mu}^L_t\leq\overline{x}+c^L$ and $\overline{\mu}^L_t\leq\overline{x}+2c^L$.
+In the same way $\underline{\mu}^{\mathrm{PV}}_t\leq c^{\mathrm{PV}}$ and $\overline{\mu}^{\mathrm{PV}}_t\leq\overline{x}-c^{\mathrm{PV}}$.
+These bounds hold at every KKT point, so they cut off no response.
+The battery duals use the generic constant $M^{\mathrm{D}}=50$~DKK/kWh, and after each solve we check that none of them reaches it.

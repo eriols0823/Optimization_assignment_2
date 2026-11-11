@@ -33,7 +33,7 @@ def main() -> None:
     ap.add_argument("--members", action="store_true", help="print the Assignment 1 summary of every member")
     ap.add_argument("--demo", action="store_true", help="run the scenario-generation demonstration")
     ap.add_argument("--q1", choices=["validate", "base", "sweep", "settlement"], help="Question 1 experiment to run")
-    ap.add_argument("--q2", choices=["validate", "steps", "indifference"], help="Question 2 experiment to run")
+    ap.add_argument("--q2", choices=["validate", "steps", "indifference", "sensitivity"], help="Question 2 experiment to run")
     args = ap.parse_args()
 
     com = load_community(args.community, day=args.day)
@@ -67,6 +67,9 @@ def main() -> None:
             q2.validate(com)
         elif args.q2 == "steps":
             q2.steps(com, RESULTS_DIR / args.community)
+        elif args.q2 == "sensitivity":
+            table = q2.sensitivity(com, RESULTS_DIR / args.community)
+            q2.plot_sensitivity(table, RESULTS_DIR / args.community)
         else:
             q2.indifference(com, RESULTS_DIR / args.community)
 

@@ -63,10 +63,10 @@ python main.py --q1 base           # Q1: base-case comparison of R, I and C
 python main.py --q1 sweep          # Q1: sensitivity to the discount and the cap (620 points)
 python main.py --q1 settlement     # Q1: dual settlement of C, individual rationality, manager's budget
 python main.py --q2 validate       # Q2: DP^cap against C (MILP vs. the duals of C)
-python main.py --q2 steps          # Q2: cap -> + budget balance -> + individual rationality (MILPs, time limit 600 s each)
+python main.py --q2 steps          # Q2: cap -> + budget balance -> + individual rationality (6 MILPs, up to 300 s each)
 python main.py --q2 indifference   # Q2: indifferent member-hours at the prices of C
+python main.py --q2 sensitivity    # Q2: the three steps along the cap factor f (33 MILPs, up to 240 s each)
 ```
-`notebooks/Q2_guia_dynamic_pricing.ipynb` is a study guide (in Spanish) to the models of Question 2.
 
 ## 2. Repository structure
 
@@ -76,7 +76,7 @@ src/
   models.py                    Q1: the community models R, I and C as one parametrized LP (CommunityModel)
   q1.py                        Q1: experiments (validation, base case, sweep, settlement)
   pricing.py                   Q2: the pricing problem DP as one parametrized MILP (PricingModel: KKT + big-M + strong duality)
-  q2.py                        Q2: experiments (validation, three steps, indifference)
+  q2.py                        Q2: experiments (validation, three steps, indifference, sensitivity to the cap)
   data_loader.py               load_community("base", day="d1") -> CommunityData:
                                  .members     one Assignment 1 InputData per member (same attribute names as in Assignment 1)
                                  .contract    ContractData: cap, penalty, discount, individual caps and shares of model I

@@ -1,0 +1,258 @@
+% 46750 Optimization in Modern Power Systems -- Assignment 2, Formative assessment 1 -- Group 14
+% Built on the official answer sheet (Formative_assessment_1_answer_sheet_latex.tex); numbering kept.
+% Compiles with pdflatex or tectonic. Equation labels (R1), (C1), (D1), ... are local to this document.
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{tabularx,booktabs,array}
+\usepackage{enumitem}
+\usepackage[most]{tcolorbox}
+\usepackage{needspace}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{dtured}{HTML}{990000}
+\definecolor{dtunavy}{HTML}{030F4F}
+\definecolor{fbgreen}{HTML}{005C2E}
+
+% Model names (Assignment 2 notation)
+\newcommand{\cR}{\mathcal{R}}
+\newcommand{\cI}{\mathcal{I}}
+\newcommand{\cC}{\mathcal{C}}
+\newcommand{\cDP}{\mathcal{DP}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cT}{\mathcal{T}}
+\newcommand{\pti}{\tilde p^{\mathrm{imp}}_t}
+\newcommand{\pte}{\tilde p^{\mathrm{exp}}_t}
+\newcommand{\Pimp}{P^{\mathrm{imp}}_t}
+\newcommand{\Pexp}{P^{\mathrm{exp}}_t}
+\newcommand{\Pexc}{P^{\mathrm{exc}}_t}
+\newcommand{\Pcap}{\overline P^{\mathrm{DSO}}_t}
+\newcommand{\aD}{\alpha^{\mathrm{DSO}}}
+\newcommand{\bD}{\beta^{\mathrm{DSO}}}
+
+% Item heading and answer box
+\newcommand{\qitem}[2]{\par\smallskip\noindent{\color{dtured}\textbf{#1}}\enspace\textbf{#2}\par\nopagebreak}
+\newtcolorbox{answer}[1][1em]{breakable, enhanced, colback=white, colframe=black!25,
+  boxrule=0.4pt, arc=1pt, left=3pt, right=3pt, top=1pt, bottom=1pt, height from=#1 to 100cm}
+
+% Experiment card
+\newcolumntype{L}{>{\raggedright\arraybackslash}p{2.3cm}}
+\newcommand{\cardrow}[2]{\textbf{#1} & #2 \\ \midrule}
+\newenvironment{card}[2]{%
+  \needspace{10\baselineskip}\qitem{#1}{#2}%
+  \noindent\small\tabularx{\linewidth}{@{}L X@{}}\toprule}{%
+  \endtabularx\par}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+\setlength{\abovedisplayskip}{3pt}\setlength{\belowdisplayskip}{3pt}
+\setlength{\abovedisplayshortskip}{2pt}\setlength{\belowdisplayshortskip}{2pt}
+\setlist{nosep,leftmargin=1.3em}
+
+\begin{document}
+
+{\color{dtunavy}\Large\bfseries Assignment 2 -- Formative assessment (Part 1)}\\[1pt]
+{\normalsize Question 1 and the models of Question 2}\\[2pt]
+\textbf{Group:} 14 \qquad \textbf{Members:} Alejandro L\'opez Bermejo (s253272), Ignacio Mart\'i Plaza (s253188), Erik Olsson (s262077)
+\quad\textbf{Code:} \url{https://github.com/eriols0823/Optimization_assignment_2}
+
+\smallskip
+\hrule
+
+% =====================================================================
+\section*{Part 0 -- Status and feedback requests}
+
+\qitem{0.1}{Status.}
+{\small
+\begin{tabularx}{\linewidth}{@{}l c c c X@{}}
+\toprule
+Model & Formulated & Implemented & Validated & Validation check used \\
+\midrule
+$\cR$ & yes & yes & yes & Reproduces the file's reference: cost 398.24\,DKK, import 173.4\,kWh, peak 27.6\,kW, net import of every member ($<0.01$\,kWh). Exceedance 66.7 vs.\ 66.5\,kWh (tied optima). \\
+$\cI$ & yes & yes & partly & Cuts the energy above the cap from 66.7 to 4.3\,kWh; $J^{\cC}\le J^{\cI}$; no simultaneous import/export. \\
+$\cC$ & yes & yes & yes & Limit case (no cap, no discount, own meters) $=\cR$; every $\lambda_t$ in the interval its regime allows; $B=\sum_t\gamma_t\Pcap$. \\
+$\cDP$ & yes & yes & yes & $\cDP^{\mathrm{cap}}$ reproduces $J^{\cC}=372.16$\,DKK (gap 0, 1\,s, no warm start); strong-duality and complementarity residuals $<10^{-9}$; every anticipated schedule equals the member's own LP optimum at the posted prices. \\
+$\cDP^{\,\cdot}$ variants & yes & yes & partly & $\cDP^{\mathrm{BB}}$: $|B|<10^{-5}$\,DKK. $\cDP^{\mathrm{BB,IR}}$ with one price: no feasible point within 300\,s (C3). \\
+\bottomrule
+\end{tabularx}}
+
+\qitem{0.2}{Feedback requests (ranked).}
+\begin{enumerate}[label=\arabic*.]
+  \item \textbf{C3}: we test individual rationality against $\cR$ (the outside option every member keeps) and use the better of $\cR$ and $\cI$ as a variant. Is $\cR$ the intended benchmark of ``staying alone'', and is a soft IR with per-member slack an acceptable way to name the blocking members?
+  \item \textbf{C2--C3}: with budget balance as an \emph{equality}, the manager could balance its budget by wasting money at the meter (simultaneous import and export, penalty paid below the cap). We forbid this with $2\times 24$ binaries. Is this consistent with the intended model, or should budget balance be an inequality?
+  \item \textbf{C3}: with uniform prices our MILP finds no point that meets budget balance and IR within 900\,s, and the soft-IR gap stays open. Is the best soft-IR point (violation and blocking members) enough evidence for the report, or should we prove infeasibility, e.g.\ with a tighter formulation?
+\end{enumerate}
+
+% =====================================================================
+\section*{Part A -- Question 1, models}
+
+\qitem{A1}{Notation (new compared with Assignment 1).}
+{\small
+\begin{tabularx}{\linewidth}{@{}l X l@{}}
+\toprule
+Symbol & Meaning & Unit \\
+\midrule
+$i\in\cM$, $\cT$ & members (16), hours (24) & -- \\
+$\Pcap$, $\aD$, $\bD$ & contract: hourly cap at the connection point, penalty per kWh above the cap, tariff discount & kW, DKK/kWh, -- \\
+$\kappa_i$ & share of the cap in $\cI$ ($\sum_i\kappa_i=1$, $\propto$ net import in $\cR$) & -- \\
+$\pti,\ \pte$ & discounted meter prices $p_t\pm(1-\bD)\tau^{\mathrm{imp}/\mathrm{exp}}$ & DKK/kWh \\
+$\Pimp,\Pexp,\Pexc$ & community import, export, import above the cap at the connection point & kWh \\
+$q_{i,t}$, $q^{\mathrm{exc}}_{i,t}$ & net consumption of $i$; its import above its own cap in $\cI$ & kWh \\
+$d^{\pm}_{i,t}$, $\overline\Delta$ & deviation above/below the reference load; maximum hourly deviation (1\,kWh) & kWh \\
+$K_i$ & own cost of $i$: disutility plus PV production cost & DKK \\
+$\lambda_t$, $\gamma_t$ & duals in $\cC$: internal price (balance), cap price & DKK/kWh \\
+$\Pi_i$, $D$, $B$ & payment of $i$ to the manager, DSO bill, manager's budget $\sum_i\Pi_i-D$ & DKK \\
+\midrule
+$\cR,\ \cI,\ \cC$ & no contract; individual contracts (split rule as superscript, $\cI^{\mathrm{net}}$ by default); community contract, central dispatch & \\
+\bottomrule
+\end{tabularx}}
+
+\qitem{A2}{$\cR$ (no contract).}
+\begin{answer}
+Member $i$ is the Assignment~1 consumer with an index added: $\mathcal X_i$ keeps the net-consumption balance, the PV bounds, the battery dynamics and the daily minimum $E^{\min}_i$. Three things change. The disutility is now linear, $c^L_i\sum_t(d^+_{i,t}+d^-_{i,t})$ with $\ell_{i,t}-\hat\ell_{i,t}=d^+_{i,t}-d^-_{i,t}$. The load may deviate from its reference by at most $\overline\Delta$ per hour, $\max(0,\hat\ell_{i,t}-\overline\Delta)\le\ell_{i,t}\le\min(L^{\max},\hat\ell_{i,t}+\overline\Delta)$. And instead of a terminal value $\pi^{\mathrm{end}}$ we require $e_{i,23}\ge e^{\mathrm{init}}_i$, a rule shared by all models so that the members' costs stay comparable. The member minimizes $J^{\cR}_i=\sum_t(p^{\mathrm{imp}}_t q^{\mathrm{imp}}_{i,t}-p^{\mathrm{exp}}_t q^{\mathrm{exp}}_{i,t})+K_i$ with $q_{i,t}=q^{\mathrm{imp}}_{i,t}-q^{\mathrm{exp}}_{i,t}$. This is an LP that separates by member (16 independent LPs), so strong duality holds.
+\end{answer}
+
+\qitem{A3}{$\cI$ (individual contracts).}
+\begin{answer}
+(a) $J^{\cI}_i=\sum_t\big(\pti q^{\mathrm{imp}}_{i,t}-\pte q^{\mathrm{exp}}_{i,t}+\aD q^{\mathrm{exc}}_{i,t}\big)+K_i$.
+(b) We add one variable, $q^{\mathrm{exc}}_{i,t}\ge0$, with $q^{\mathrm{exc}}_{i,t}\ge q^{\mathrm{imp}}_{i,t}-\kappa_i\Pcap$ $(:\gamma_{i,t})$; the import below the cap is then $q^{\mathrm{imp}}_{i,t}-q^{\mathrm{exc}}_{i,t}$.
+(c) Every metered kWh pays the discounted tariff, and a kWh above the cap pays $\pti+\aD$: we read the discount as a property of the metered exchange and the penalty as the price of exceeding. Charging the full tariff instead ($p_t+\tau^{\mathrm{imp}}+\aD$) would change the cost of an exceeding kWh by only $\bD\tau^{\mathrm{imp}}=0.375$\,DKK when $\aD=10$.
+(d) No binaries are needed. The import cost is convex and piecewise linear in $q^{\mathrm{imp}}_{i,t}$ (slope $\pti$, then $\pti+\aD$), so with $\aD>0$ the minimization itself sets $q^{\mathrm{exc}}_{i,t}=\max(0,q^{\mathrm{imp}}_{i,t}-\kappa_i\Pcap)$. The cap is therefore soft, with $0\le\gamma_{i,t}\le\aD$.
+(e) Still an LP, separable by member.
+\end{answer}
+
+\qitem{A4}{$\cC$ (community contract, central dispatch).}
+\begin{answer}
+(a) The welfare is $W^{\cC}=-J^{\cC}$, with $J^{\cC}=D+\sum_iK_i$: the DSO bill $D=\sum_t(\pti\Pimp-\pte\Pexp+\aD\Pexc)$ (energy, discounted tariffs, penalty) plus the members' disutility and PV cost. The internal payments are transfers and cancel out.
+(b) The internal balance is $\sum_i q_{i,t}-(\Pimp-\Pexp)=0\ (:\lambda_t)$ and the soft cap $\Pexc\ge\Pimp-\Pcap\ (:\gamma_t\ge0)$, with $\Pimp,\Pexp,\Pexc\ge0$ and no export cap. With this sign convention $\lambda_t=\partial J^{\cC}/\partial q_{i,t}$ is what one more kWh consumed in hour $t$ costs the community. The KKT conditions give $\lambda_t=\pte$ when the community exports, $\pti$ below the cap, $\pti+\gamma_t$ with $\gamma_t\in[0,\aD]$ at the cap, and $\pti+\aD$ above it. The problem is an LP, and $J^{\cC}\le\sum_iJ^{\cI}_i$ because the schedules of $\cI$ are feasible in $\cC$ and cost no more there.
+\end{answer}
+
+\qitem{A5}{Settlement under $\cC$.}
+\begin{answer}
+(a) The surplus of member $i$ is $S^{\cC}_i=-J^{\cC}_i=-(\Pi_i+K_i)$ with $\Pi_i=\sum_t\lambda_tq_{i,t}$. The same components appear in $\cR$ and $\cI$, with the member's own grid bill in place of $\Pi_i$. The utility of consumption drops out because $E^{\min}_i$ binds and the load only moves, and the end-of-day state of charge is the same in every model. Individual rationality then means $S^{\cC}_i\ge S^{\cR}_i$ and $S^{\cC}_i\ge S^{\cI}_i$.
+(b) Summing $\lambda_t$ over the regimes of A4(b) gives $B=\sum_i\Pi_i-D=\sum_t\gamma_t\Pcap\ge0$, the congestion rent. It is positive whenever the cap binds: in the base case $B=163.77$\,DKK, against a community gain of only $V^{\cC}=26.08$\,DKK.
+\end{answer}
+
+% =====================================================================
+\section*{Part B -- Question 1, plan of numerical experiments}
+
+\begin{card}{B1}{Contract terms: $\cR$, $\sum_i\cI_i$ and $\cC$ from the points of view of the community and the DSO.}
+\cardrow{1. Question}{For which discount and cap is a contract worth signing alone ($\cI$) or together ($\cC$), and how much congestion does the DSO remove with each?}
+\cardrow{2. Hypothesis}{(i) The break-even discount $\beta^\star(f)$ at which $V^{\cC}=0$ rises as the cap tightens: more load must leave the capped hours, and the disutility grows from the L1/L2 loads to the L3/L4 loads. Below some $f$ no $\beta\le0.95$ suffices. (ii) $\cI$ needs a larger $\beta$ than $\cC$ for every $f$, because no member can use another's unused cap. (iii) As the cap approaches the peak of $\cR$ ($f\to27.6/7.2\approx3.8$), $V^{\cC}>0$ even at $\beta=0$, from netting behind the meter alone. (iv) The flexibility $F^m$ depends on $f$ only, since $\aD=10$ exceeds every rent $\gamma_t$ (at most 4.19\,DKK/kWh).}
+\cardrow{3. Protocol}{Contract (Table 11c), read as a map: $\bD\in\{0,0.05,\dots,0.95\}$, $f\in\{1.0,1.1,\dots,4.0\}$ (cap $=f E^{\cR}/24$, base 1.3); $\aD=10$, d1, base mix fixed; $\cI$ and $\cC$ at 620 points; reference $\cR$.}
+\cardrow{4. Metrics}{See below.}
+\cardrow{5. Figure}{Heat map of $V^{\cC}$ over $(\bD,f)$ with the break-even contours of $\cC$ and $\cI$ and the base case marked. Line plot of $F^{\cI},F^{\cC}$ against $f$. Caption: ``The community contract pays from $\bD\approx0.5$ at the base cap, individual contracts never below $f=1.6$; the cap, not the discount, sets the flexibility.''}
+\cardrow{6. Insight}{``The DSO buys flexibility with the cap and the community's acceptance with the discount; pooling lowers the discount needed.'' Contradicted if $\cI$ beats $\cC$ anywhere, or if $F^m$ moves with $\bD$.}
+\textbf{7. Status} & Preliminary: at $f=1.3$, $\cC$ beats $\cR$ from $\beta=0.50$; at $f=1.1$ from 0.85; at $f=1.0$ never. $\cI$ never for $f\le1.6$. $F$ varies by less than 0.01\,kWh with $\beta$. \\ \bottomrule
+\end{card}
+{\small
+\begin{tabularx}{\linewidth}{@{}l X l l l l@{}}
+\toprule
+Metric & Definition & Unit & Reference & Point of view & Sign \\
+\midrule
+$V^m$ & $J^{\cR}-J^m$, $m\in\{\cI,\cC\}$ & DKK/day & $\cR$ & community & $+$ = gain \\
+$F^m$ & $X^{\cR}-X^m$, with $X^m=\sum_t\max(0,P^m_t-\Pcap)$ & kWh/day & $\cR$ & DSO & $+$ = removed \\
+$c^m$ & (tariff+penalty income of DSO in $\cR$ $-$ in $m$)$/F^m$ & DKK/kWh & $\cR$ & DSO & $+$ = cost to DSO \\
+\bottomrule
+\end{tabularx}}
+
+\begin{card}{B2}{Settlement under $\cC$: individual rationality by consumer type, and the manager's budget.}
+\cardrow{1. Question}{When $\cC$ benefits the community, does every type of member gain under the dual settlement, and is the manager's budget balanced?}
+\cardrow{2. Hypothesis}{All members pay the same $\lambda_t$, which rises to $\pti+\gamma_t$ in the capped hours. PV owners with flexible loads (L1/L2) gain against $\cR$: they sell at $\lambda_t>p^{\mathrm{exp}}_t$ and shift out of the expensive hours. Stiff members without PV (L4, L3) lose: they buy at the full rent and do not move. Battery owners gain less than in $\cI$, where they relieve their own small cap ($\kappa_i\approx0.1$). $B=\sum_t\gamma_t\Pcap>0$, so the members together gain $V^{\cC}-B<0$.}
+\cardrow{3. Protocol}{Base case, where $V^{\cC}=26.1$\,DKK$>0$; $\cC$ against $\cR$ and $\cI$ member by member; check with one-sided derivatives of $J^{\cC}$ that the payments do not depend on the dual returned.}
+\cardrow{4. Metrics}{See below.}
+\cardrow{5. Figure}{Dot plot per member, grouped by asset class and ordered by slope: $V^{\cC}_i$ (filled) and $V^{\cI}_i$ (hollow) against $\cR$, next to bars of the flexibility $F^{\cC}_i$. Caption: ``Only PV owners with flexible loads gain; the manager keeps the congestion rent.''}
+\cardrow{6. Insight}{``The dual price of $\cC$ allocates efficiently but over-collects: the manager's rent exceeds the community's gain.'' Contradicted if the stiff members gain or $B\le0$.}
+\textbf{7. Status} & Preliminary: 3/16 members not worse off than $\cR$ (all L1/L2 with PV), 8/16 than $\cI$; L4 without assets loses 23.2\,DKK; $B=163.8$\,DKK $=\sum_t\gamma_t\Pcap$; $\lambda_t$ unique in 23/24 h, payments unique. \\ \bottomrule
+\end{card}
+{\small
+\begin{tabularx}{\linewidth}{@{}l X l l l l@{}}
+\toprule
+Metric & Definition & Unit & Reference & Point of view & Sign \\
+\midrule
+$V^m_i$ & $J^{\cR}_i-J^m_i$ ($J^{\cC}_i=\Pi_i+K_i$) & DKK/day & $\cR$ (and $\cI$) & member & $+$ = gain \\
+$F^{\cC}_i$ & $\sum_{t\in\cT^{\cR}}(q^{\cR}_{i,t}-q^{\cC}_{i,t})$, $\cT^{\cR}$ = hours where $\cR$ exceeds the cap & kWh/day & $\cR$ & member & $+$ = shifted out \\
+$B$ & $\sum_i\Pi_i-D$ & DKK/day & 0 (balance) & manager & $+$ = surplus \\
+\bottomrule
+\end{tabularx}}
+
+\begin{card}{B3}{Optional: penalty level, which decides whether the cap is a hard limit.}
+\cardrow{1. Question}{Is the flexibility the DSO gets set by the cap alone, or also by the penalty?}
+\cardrow{2. Hypothesis}{$\cC$ keeps the import at the cap in hour $t$ as long as $\aD>\gamma_t(\aD{=}10)$. Exceedance appears first in hour 11 once $\aD<4.19$\,DKK/kWh, then in hours 13 and 12 (2.29, 2.24), so the flexibility falls in steps at these rents, while $V^{\cC}$ rises because a cheaper penalty replaces the most expensive shifts.}
+\cardrow{3. Protocol}{Contract (Table 11c): $\aD\in\{0,0.25,\dots,10\}$, refined by 0.01 around the rents of the base case; $\bD=0.75$, $f=1.3$, d1 fixed; $\cC$ and $\cI$; reference $\cR$; 41 runs + refinements.}
+\cardrow{4. Metrics}{$F^{\cC}$, $X^{\cC}$, number of hours above the cap (DSO); $V^{\cC}$ (community); as in B1.}
+\cardrow{5. Figure}{Line plot over $\aD$: $X^{\cC}$ (top) and $V^{\cC}$ (bottom), sharing the x-axis, with the base-case rents $\gamma_t$ marked as vertical lines. Caption: ``Below the largest cap rent the cap becomes a price.''}
+\cardrow{6. Insight}{``A penalty below the cap rent turns the cap into a price; the DSO's flexibility is bounded by $\aD$.'' Contradicted if the steps do not appear at the $\gamma_t$ of the base case.}
+\textbf{7. Status} & Preliminary, confirmed: $X^{\cC}=0$ for $\aD\ge4.19$. Hour 11 exceeds by 0.21\,kWh for $2.29\le\aD<4.19$, hours 11 and 13 by 1.0\,kWh below 2.29, and $X^{\cC}=13$\,kWh at $\aD=1$. $V^{\cC}$ moves by $<0.4$\,DKK above $\aD=2.3$. Side result: $V^{\cI}>0$ only for $\aD\le1.25$. \\ \bottomrule
+\end{card}
+
+% =====================================================================
+\section*{Part C -- Question 2, models}
+
+\qitem{C1}{Members' problem at posted prices $x_t$.}
+\begin{answer}
+Once the prices $x=(x_t)_{t\in\cT}$ are posted, member $i$ schedules its appliances as in Assignment~1, paying $x_t$ for every kWh it takes from the community and receiving $x_t$ for every kWh it gives back:
+\begin{equation}
+\mathcal F_i(x):\quad \min_{y_i\in\mathcal X_i}\ J^{\cDP}_i=\textstyle\sum_t x_t\,q_{i,t}+K_i,\tag{F}
+\end{equation}
+where $y_i$ collects its decisions and $q_{i,t}=\ell_{i,t}+p^{\mathrm{ch}}_{i,t}-p^{\mathrm{dis}}_{i,t}-q^{\mathrm{PV}}_{i,t}$ is free in sign. Compared with $\cR$, $\mathcal X_i$ and $K_i$ stay as they are; what disappears is the member's own meter. There is no split into $q^{\mathrm{imp}}$ and $q^{\mathrm{exp}}$, no tariff and no penalty (the manager pays them at the connection point), and the two prices $p^{\mathrm{imp}}_t>p^{\mathrm{exp}}_t$ merge into one. Since $x$ only enters the objective, the manager changes what the member optimizes but never what it can do. (F) is an LP for every $x$, and its KKT conditions are linear in $(x,y_i,\xi_i)$ apart from the complementarity products ($\xi_i$: duals). For the load they give three regimes: with $\omega_{i,t}=x_t-\mu^E_i$, the load stays at its reference if $|\omega_{i,t}|<c^L_i$, drops to its lower bound if $\omega_{i,t}>c^L_i$, rises to its upper bound if $\omega_{i,t}<-c^L_i$, and is indifferent at $|\omega_{i,t}|=c^L_i$.
+\emph{Buying and selling at the same price.} A kWh of PV is worth $x_t$ whether it is used at home, sold to a neighbour or exported, so self-consumption earns no premium and PV runs whenever $x_t>c^{\mathrm{PV}}$. The battery only reacts to price differences (it moves energy from $t$ to $s$ when $\eta^{\mathrm{ch}}\eta^{\mathrm{dis}}x_s>x_t$, and never charges and discharges at once while $x_t\ge0$). The import and export regimes of the Assignment~1 price ladder merge into one. Finally, the manager's budget in hour $t$ becomes $(x_t-\pti)\Pimp-(x_t-\pte)\Pexp-\aD\Pexc$: it balances only when $x_t$ equals the meter price in the direction of the flow, and any price above $\pti$ in an importing hour collects a congestion rent.
+\end{answer}
+
+\qitem{C2}{Manager's problem $\cDP$ (upper level).}
+\begin{answer}
+The manager chooses the prices $x_t\in[\underline x_t,\overline x_t]$ and the exchange $\Pimp,\Pexp,\Pexc\ge0$, anticipating every member's response. We write this as an optimistic bilevel problem:
+\begin{subequations}
+\begin{align}
+\min_{x,\,P,\,(y_i)}\ & J^{\cDP}=\textstyle\sum_t\big(\pti\Pimp-\pte\Pexp+\aD\Pexc\big)+\sum_iK_i(y_i) \tag{D1}\\
+\text{s.t. }& \textstyle\sum_iq_{i,t}=\Pimp-\Pexp,\quad \Pexc\ge\Pimp-\Pcap,\quad \underline x_t\le x_t\le\overline x_t\qquad\forall t \tag{D2}\\
+& y_i\in\arg\min\mathcal F_i(x)\qquad\forall i\in\cM. \tag{D3}
+\end{align}
+\end{subequations}
+We set $\underline x_t=0$, since a negative price would pay members to waste energy, and $\overline x_t=\max_s\tilde p^{\mathrm{imp}}_s+\aD$, since no kWh can ever cost the community more. Both bounds contain every value of $\lambda^{\cC}$ (A4(b)).
+\emph{What the objective implies.} (D1) is exactly the welfare of $\cC$. The internal payments $\sum_tx_tq_{i,t}$ are transfers, so they cancel out: the manager acts in the community's interest but does not care how the welfare is shared, and the prices matter only through the dispatch they induce. Since (D3) limits $\cC$ to the responses the members are willing to give, $J^{\cDP}\ge J^{\cC}$. And $x=\lambda^{\cC}$ attains $J^{\cC}$, because the KKT system of $\cC$ splits member by member once every member sees $\lambda_t$ (the competitive-equilibrium argument of the pricing lecture, §5). One uniform price per hour is thus enough for efficiency, but it is not unique and does not protect the members (C3).
+\emph{Single-level model.} Since (F) is an LP, its KKT conditions describe its optimal responses exactly, and we use them in place of (D3). Stationarity is linear, because $x$ never multiplies a variable there, so the only non-convex part is the 2\,952 complementarity pairs $0\le a\perp b\ge0$. We linearize each with one binary, $a\le M^Pu$ and $b\le M^D(1-u)$. $M^P$ comes from the bounds of $\mathcal X_i$. For the load and PV duals, $M^D$ follows from the KKT conditions themselves (e.g.\ $\mu^E_i\le\overline x+c^L_i$); for the battery we use 50\,DKK/kWh and check afterwards that no dual reaches it. (SOS1 constraints avoid $M$ but were far slower: 43\,\% gap after 300\,s, against 1\,s.) (D1) contains no product $x_tq_{i,t}$, so $\cDP^{\mathrm{cap}}$ needs no strong-duality step; only the requirements of C3 do. The result is an MILP with 10\,296 variables and 10\,248 constraints.
+\emph{When a best response is not unique.} With a linear disutility, $\arg\min\mathcal F_i(x)$ is a whole set at every tie of C1. The MPEC lets the solver pick the member's schedule within that set, so ties are broken in the manager's favour: this is the optimistic solution. This matters because the optimal prices sit exactly on these ties: in the capped hours $\lambda^{\cC}_t$ equals the night price of 1.41\,DKK/kWh plus $2c^L$ of the marginal load class (a load only moves a kWh from $t$ to $s$ if $x_t-x_s>2c^L_i$), or is set by a battery. At $\lambda^{\cC}$, 220 of the 384 member-hours are indifferent, and if the members broke their ties against the manager the import could exceed the cap in all 18 capped hours. Pricing slightly inside each tie, or evaluating the prices pessimistically, would limit this exposure (Round 2).
+\end{answer}
+
+\qitem{C3}{Requirements.}
+\begin{answer}
+\emph{Budget balance} ($\cDP^{\mathrm{BB}}$). We impose $\sum_i\Pi_i=D$, with $\Pi_i=\sum_tx_tq_{i,t}$, as an equality. The manager is a non-profit entity, so any surplus belongs to the members, and since (D1) ignores transfers an inequality would leave the surplus undetermined. The payments are bilinear, but strong duality of (F) gives $\sum_tx_tq_{i,t}+K_i=\Phi_i(\xi_i)$, the dual objective, which is linear because the prices only appear in the dual constraints. With an equality, the manager could also meet the requirement by wasting money at the meter, importing and exporting at once or paying the penalty below the cap. Two binaries per hour rule this out: $\Pimp\le Mu_t$, $\Pexp\le M(1-u_t)$, $\Pexc\le Mz_t$ and $\Pexc\le\Pimp-\Pcap+M(1-z_t)$.
+\emph{Individual rationality} ($\cDP^{\mathrm{BB,IR}}$). We require $J^{\cDP}_i=\Phi_i(\xi_i)\le J^{\mathrm{bench}}_i$ for every member. Both sides contain the components of A5(a), i.e.\ payments, disutility and PV cost, with the same end-of-day battery rule in all models. The benchmark is $\cR$, since signing nothing is always possible; the variant $\mathrm{IR}^{\cR\cI}$ uses $\min(J^{\cR}_i,J^{\cI}_i)$ under the same contract terms.
+\emph{Infeasibility.} We solve the three steps in turn and report an infeasible step as a result. When one price cannot meet both requirements, we extend the same model in two ways. The first is a soft IR, $\Phi_i\le J^{\mathrm{bench}}_i+s_i$ with $s_i\ge0$ and $\rho\sum_is_i$ ($\rho=10^3$) added to (D1): the members with $s_i>0$ are the ones blocking, and $\sum_is_i$ is what would have to be given up to satisfy them. The second is price discrimination, with one price vector per asset class (4) or per member (16), which shows how many price signals the two requirements really need.
+\emph{Preliminary results (base case).} $\cDP^{\mathrm{cap}}$ reaches $J^{\cC}$, but its prices are far from unique: for the same welfare the manager may keep anything from 40 to 170\,DKK. Budget balance costs only 0.02\,DKK of welfare. The manager returns the rent by raising the price to 10.6--12.6\,DKK/kWh in the export hours 19--20, where nobody can react any more, so the money goes to those who sell then (mainly members with PV and a battery) and seven members, six of them without PV, stay worse off than in $\cR$. With one price per hour no point meeting both requirements was found within 300\,s (infeasibility not proven). The best soft solution violates IR by 10.6\,DKK, borne by the stiff members without PV (C3, C4, C3\_B, C4\_B) and by C2, and costs 10.5\,DKK of welfare. With one price per asset class both requirements hold at a welfare loss of 1.2\,DKK, and with one price per member at no loss. A first sweep of the cap shows a change of regime: from $f=1.4$ one price meets both requirements at no cost, while at $f=1.1$ the community loses even under $\cC$, so no prices at all can satisfy IR.
+\end{answer}
+
+% =====================================================================
+\clearpage
+\section*{Feedback (filled in by the teaching team)}
+
+Codes: {\color{fbgreen}\textbf{\checkmark\ sound}} (build on it) \quad
+{\color{orange!70!black}\textbf{$\sim$ revise}} (one point to fix or justify) \quad
+{\color{dtured}\textbf{$\times$ rethink}} (would carry into Q2--Q3) \quad
+{\color{black!55}\textbf{? unclear}} (not enough written to assess)
+
+\renewcommand{\arraystretch}{1.6}
+\begin{tabularx}{\linewidth}{@{}l c X@{}}
+\toprule
+Item & Code & Comment \\
+\midrule
+0.2 Requests & & \\
+A1 Notation & & \\
+A2 $\cR$ & & \\
+A3 $\cI$ & & \\
+A4 $\cC$ & & \\
+A5 Settlement & & \\
+B1 Contract terms & & \\
+B2 Settlement & & \\
+B3 Optional & & \\
+C1 Members & & \\
+C2 Manager & & \\
+C3 Requirements & & \\
+\bottomrule
+\end{tabularx}
+
+\end{document}

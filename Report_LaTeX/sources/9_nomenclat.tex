@@ -1,0 +1,103 @@
+% Nomenclature of Assignment 2 (all questions). A static table (no makeindex needed), grouped by role.
+% Add new symbols in the right block when a question introduces them; keep one row per symbol.
+\section*{Nomenclature}
+\addcontentsline{toc}{section}{Nomenclature}
+\markboth{Nomenclature}{Nomenclature}
+The notation of Assignment~1 is kept; the member index $i$ is added to every member quantity.
+Energies are hourly, so kW and kWh/h are numerically interchangeable.
+
+{\small
+\begin{xltabular}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} & \textbf{Unit} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Symbol} & \textbf{Meaning} & \textbf{Unit} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\multicolumn{3}{@{}l}{\textit{Sets and indices}} \\
+$i\in\mathcal{M}$ & Members of the community (16 in the base case) & -- \\
+$t\in\mathcal{T}$ & Hours of the day, $\{0,\dots,23\}$ & -- \\
+$\mathcal{T}^{\mathcal{R}}$ & Hours in which the import of $\mathcal{R}$ exceeds the cap & -- \\
+$\mathcal{X}_i$ & Feasible set of member $i$, constraints~\eqref{eq:member} & -- \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Market, grid and contract}} \\
+$p_t$ & Day-ahead energy price & DKK/kWh \\
+$\tau^{\mathrm{imp}}$, $\tau^{\mathrm{exp}}$ & Full grid tariffs on import and export & DKK/kWh \\
+$p^{\mathrm{imp}}_t$, $p^{\mathrm{exp}}_t$ & Effective prices without contract, $p_t\pm\tau^{\mathrm{imp}/\mathrm{exp}}$ & DKK/kWh \\
+$\tilde{p}^{\mathrm{imp}}_t$, $\tilde{p}^{\mathrm{exp}}_t$ & Discounted prices under a contract, \eqref{eq:ptilde} & DKK/kWh \\
+$\beta^{\mathrm{DSO}}$ & Tariff discount of the contract, in $[0,1]$ & -- \\
+$\alpha^{\mathrm{DSO}}$ & Penalty per kWh imported above the cap & DKK/kWh \\
+$\overline{P}^{\mathrm{DSO}}_t$ & Hourly cap on the import at the connection point & kW \\
+$f$ & Cap factor: $\overline{P}^{\mathrm{DSO}}_t=f\,E^{\mathcal{R}}/24$ (base 1.3) & -- \\
+$E^{\mathcal{R}}$ & Daily import of the community without contract ($\mathcal{R}$) & kWh \\
+$\kappa_i$ & Share of the cap of member $i$ in $\mathcal{I}$, $\sum_i\kappa_i=1$ & -- \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Member parameters}} \\
+$\hat{\ell}_{i,t}$ & Reference (preferred) load & kWh/h \\
+$\overline{\Delta}$ & Maximum hourly deviation from the reference load & kWh \\
+$L^{\min}$, $L^{\max}$ & Minimum and maximum hourly load & kWh/h \\
+$E^{\min}_i$ & Minimum daily energy (= daily reference energy) & kWh \\
+$c^{L}_i$ & Slope of the linear disutility & DKK/kWh \\
+$c^{\mathrm{PV}}$ & Marginal cost of PV production & DKK/kWh \\
+$PV^{\max}_{i,t}$ & Available PV production & kWh/h \\
+$E^{\mathrm{bat}}_i$ & Battery energy capacity & kWh \\
+$P^{\mathrm{ch}}_i$, $P^{\mathrm{dis}}_i$ & Maximum charging and discharging power & kW \\
+$\eta^{\mathrm{ch}}$, $\eta^{\mathrm{dis}}$ & Charging and discharging efficiencies & -- \\
+$e^{\mathrm{init}}_i$ & State of charge at the start of the day & kWh \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Decision variables}} \\
+$y_i$ & All decisions of member $i$ (load, deviations, PV, battery), $y_i\in\mathcal{X}_i$ & -- \\
+$\ell_{i,t}$ & Load & kWh/h \\
+$d^{+}_{i,t}$, $d^{-}_{i,t}$ & Deviation of the load above and below its reference, $\geq0$ & kWh/h \\
+$q^{\mathrm{PV}}_{i,t}$ & PV production & kWh/h \\
+$p^{\mathrm{ch}}_{i,t}$, $p^{\mathrm{dis}}_{i,t}$ & Battery charging and discharging power, $\geq0$ & kWh/h \\
+$e_{i,t}$ & State of charge at the end of hour $t$ & kWh \\
+$q_{i,t}$ & Net consumption, \eqref{eq:net} (free in sign) & kWh/h \\
+$q^{\mathrm{imp}}_{i,t}$, $q^{\mathrm{exp}}_{i,t}$ & Import and export on the member's own meter ($\mathcal{R}$, $\mathcal{I}$) & kWh/h \\
+$q^{\mathrm{exc}}_{i,t}$ & Import of member $i$ above its own cap ($\mathcal{I}$) & kWh/h \\
+$P^{\mathrm{imp}}_t$, $P^{\mathrm{exp}}_t$ & Import and export of the community at the connection point & kWh/h \\
+$P^{\mathrm{exc}}_t$ & Import of the community above the cap & kWh/h \\
+$x_t$ & Internal price posted by the manager ($\mathcal{DP}$) & DKK/kWh \\
+$\underline{x}_t$, $\overline{x}_t$ & Bounds of the posted price & DKK/kWh \\
+$s_i$ & Violation of the individual rationality of member $i$ (soft variant) & DKK \\
+$u_t$, $z_t$ & Binaries excluding simultaneous import/export and a penalty below the cap & -- \\
+$M^{\mathrm{P}}$, $M^{\mathrm{D}}$ & Big-M constants of the primal and dual side of a complementarity pair (Appendix~A) & kWh, DKK/kWh \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Dual variables}} \\
+$\lambda_t$ & Internal price of $\mathcal{C}$: dual of the internal balance~\eqref{eq:C_bal} & DKK/kWh \\
+$\gamma_t$ & Cap price of $\mathcal{C}$: dual of~\eqref{eq:C_cap}, in $[0,\alpha^{\mathrm{DSO}}]$ & DKK/kWh \\
+$\lambda^{\mathcal{R}}_{i,t}$, $\lambda^{\mathcal{I}}_{i,t}$ & Duals of the member's own balance in $\mathcal{R}$ and $\mathcal{I}$ & DKK/kWh \\
+$\gamma_{i,t}$ & Dual of the individual cap in $\mathcal{I}$ & DKK/kWh \\
+$\mu^{E}_i$ & Dual of the daily minimum: internal value of a kWh of daily need & DKK/kWh \\
+$\nu_{i,t}$ & Dual of the deviation definition~\eqref{eq:dev}, $|\nu_{i,t}|\leq c^L_i$ ($\mathcal{DP}$) & DKK/kWh \\
+$\underline{\mu}^{L}_{i,t}$, $\overline{\mu}^{L}_{i,t}$ & Duals of the hourly load bounds & DKK/kWh \\
+$\underline{\mu}^{\mathrm{PV}}_{i,t}$, $\overline{\mu}^{\mathrm{PV}}_{i,t}$ & Duals of the PV bounds & DKK/kWh \\
+$\psi_{i,t}$ & Dual of the state-of-charge balance ($-\psi_{i,t}$: value of stored energy) & DKK/kWh \\
+$\underline{\mu}^{\mathrm{ch}},\overline{\mu}^{\mathrm{ch}},\underline{\mu}^{\mathrm{dis}},\overline{\mu}^{\mathrm{dis}},\underline{\mu}^{e},\overline{\mu}^{e}$ & Duals of the battery bounds (index $i,t$) & DKK/kWh \\
+$\mu^{\mathrm{end}}_i$ & Dual of the end-of-day state of charge & DKK/kWh \\
+$\xi_i$ & All dual variables of member $i$'s problem~\eqref{eq:DP_member} & -- \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Costs, payments and metrics}} \\
+$K_i$ & Own cost of member $i$: disutility plus PV production cost, \eqref{eq:owncost} & DKK \\
+$J^m_i$, $J^m$ & Cost of member $i$ and of the community in model $m$ & DKK \\
+$W^{\mathcal{C}}$ & Welfare of the community, $-J^{\mathcal{C}}$ & DKK \\
+$\Pi_i$ & Payment of member $i$ to the manager ($\sum_t\lambda_tq_{i,t}$ in $\mathcal{C}$, $\sum_tx_tq_{i,t}$ in $\mathcal{DP}$) & DKK \\
+$\Phi_i$ & Dual objective of member $i$'s problem, $=\Pi_i+K_i$ by strong duality & DKK \\
+$D$ & Bill of the DSO to the manager, \eqref{eq:bill} & DKK \\
+$B$ & Manager's budget, $\sum_i\Pi_i-D$ & DKK \\
+$J^{\mathrm{bench}}_i$ & Benchmark cost of member $i$ for individual rationality ($J^{\mathcal{R}}_i$ by default) & DKK \\
+$\rho$ & Weight of the IR violation in the soft variant & DKK/DKK \\
+$V^m$, $V^m_i$ & Gain of the community and of member $i$ against $\mathcal{R}$ & DKK \\
+$X^m$ & Energy imported above the cap in model $m$ & kWh \\
+$F^m$, $F^m_i$ & Flexibility: energy above the cap removed against $\mathcal{R}$ & kWh \\
+$G^m$, $c^m$ & Tariff and penalty income of the DSO; its cost per kWh removed & DKK, DKK/kWh \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Models (variants named by superscripts)}} \\
+$\mathcal{R}$, $\mathcal{I}$, $\mathcal{C}$ & No contract; individual contracts; community contract with central dispatch & -- \\
+$\mathcal{F}_i(x)$ & Problem of member $i$ at posted prices $x$, \eqref{eq:DP_member} & -- \\
+$\mathcal{DP}^{\mathrm{cap}}$, $\mathcal{DP}^{\mathrm{BB}}$, $\mathcal{DP}^{\mathrm{BB,IR}}$ & Pricing problem with the contract only; with budget balance; with individual rationality (Table~\ref{tab:DP_variants}) & -- \\
+\end{xltabular}}

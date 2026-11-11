@@ -99,19 +99,24 @@ class _Complementarity:
 
     def __init__(self, model: gp.Model, method: str, big_m_dual: float):
         self.model, self.method, self.big_m_dual = model, method, big_m_dual
-        self.pairs: list[tuple[gp.Var, gp.Var, str]] = []
+        self.pairs: list[tuple[gp.Var, gp.Var, str, float, bool]] = []
 
-    def add(self, a, b, big_m_primal, name: str):
+    def add(self, a, b, big_m_primal, name: str, big_m_dual=None):
+        """big_m_primal, big_m_dual: valid upper bounds of a and b (scalars or one per pair). The dual bound defaults to
+        the generic constant; tighter bounds derived from the KKT conditions give a stronger LP relaxation."""
+        derived = big_m_dual is not None                  # a bound derived from the KKT conditions, valid by construction
         a, b = self._as_list(a), self._as_list(b)
         big_m_primal = np.broadcast_to(np.asarray(big_m_primal, dtype=float), (len(a),))
+        big_m_dual = np.broadcast_to(np.asarray(self.big_m_dual if big_m_dual is None else big_m_dual, dtype=float),
+                                     (len(a),))
         for k, (ak, bk) in enumerate(zip(a, b)):
-            self.pairs.append((ak, bk, f"{name}[{k}]"))
+            self.pairs.append((ak, bk, f"{name}[{k}]", float(big_m_dual[k]), derived))
             if self.method == "sos1":
                 self.model.addSOS(GRB.SOS_TYPE1, [ak, bk])
             else:
                 u = self.model.addVar(vtype=GRB.BINARY)
                 self.model.addConstr(ak <= big_m_primal[k] * u)
-                self.model.addConstr(bk <= self.big_m_dual * (1 - u))
+                self.model.addConstr(bk <= big_m_dual[k] * (1 - u))
 
     @staticmethod
     def _as_list(v) -> list:
@@ -119,25 +124,34 @@ class _Complementarity:
 
     def worst_residual(self) -> float:
         """Largest product a * b over all pairs after solving (0 if every condition holds)."""
-        return max((abs(a.X * b.X) for a, b, _ in self.pairs), default=0.0)
+        return max((abs(a.X * b.X) for a, b, _, _, _ in self.pairs), default=0.0)
 
     def at_big_m(self, tol: float = 1e-6) -> list[str]:
-        """Pairs whose dual side reached the big-M constant (M too small: increase it and re-solve)."""
+        """Pairs whose dual side reached the generic big-M constant (M may be too small: increase it and re-solve).
+        Pairs with a bound derived from the KKT conditions can sit at it legitimately (e.g. c^L + nu = 2 c^L when the
+        load deviates downwards) and are not reported."""
         if self.method == "sos1":
             return []
-        return [name for _, b, name in self.pairs if b.X >= self.big_m_dual - tol]
+        return [name for _, b, name, M, derived in self.pairs if not derived and b.X >= M - tol]
 
 
-def add_member_kkt(model: gp.Model, member, price, comp: _Complementarity, n_hours: int = 24) -> dict:
+def add_member_kkt(model: gp.Model, member, price, comp: _Complementarity, n_hours: int = 24,
+                   price_max: float | None = None) -> dict:
     """Add member i's best response to the posted prices `price` (24 Gurobi variables or numbers) as KKT conditions.
 
     Member i's LP (report eq. Q2-member):
         min  sum_t price_t q_t + K_i      s.t. the feasible set X_i of Question 1,  q_t = l_t + p_ch_t - p_dis_t - g_t
     Returns its primal variables, its dual variables, the net consumption q, its own cost K_i, and its dual objective
     (= its optimal cost J_i = payment + K_i by strong duality, linear in the dual variables).
+
+    price_max: upper bound of the prices (DKK/kWh). With 0 <= x_t <= price_max the KKT conditions bound the duals of
+    the load and the PV (report, Appendix): |nu_t| <= c^L, mu_E <= price_max + c^L, mu_l_lo <= price_max + c^L,
+    mu_l_up <= price_max + 2 c^L, mu_g_lo <= c^PV, mu_g_up <= price_max - c^PV. These bounds are the big-M constants of
+    those pairs; the battery's duals keep the generic constant.
     """
     T = n_hours
     cL, cPV = member.linear_disutility, member.pv_marginal_cost
+    xm = comp.big_m_dual if price_max is None else float(price_max)
     l_ref, l_lo, l_up = member.reference_load, member.load_lower_kWh, member.load_upper_kWh
     E_min = member.min_daily_energy_kWh
 
@@ -193,18 +207,18 @@ def add_member_kkt(model: gp.Model, member, price, comp: _Complementarity, n_hou
     dual = {"nu": nu, "mu_E": mu_E, "mu_l_lo": mu_l_lo, "mu_l_up": mu_l_up}
     dual_obj = nu @ l_ref + mu_E * E_min + mu_l_lo @ l_lo - mu_l_up @ l_up
 
-    comp.add(s_l_lo, mu_l_lo, l_up - l_lo, f"{member.consumer_id}.l_lo")
-    comp.add(s_l_up, mu_l_up, l_up - l_lo, f"{member.consumer_id}.l_up")
-    comp.add(d_plus, r_plus, member.max_hourly_deviation_kWh, f"{member.consumer_id}.d_plus")
-    comp.add(d_minus, r_minus, member.max_hourly_deviation_kWh, f"{member.consumer_id}.d_minus")
-    comp.add(s_E, mu_E, float(l_up.sum() - E_min), f"{member.consumer_id}.E_min")
+    comp.add(s_l_lo, mu_l_lo, l_up - l_lo, f"{member.consumer_id}.l_lo", xm + cL)
+    comp.add(s_l_up, mu_l_up, l_up - l_lo, f"{member.consumer_id}.l_up", xm + 2 * cL)
+    comp.add(d_plus, r_plus, member.max_hourly_deviation_kWh, f"{member.consumer_id}.d_plus", 2 * cL)
+    comp.add(d_minus, r_minus, member.max_hourly_deviation_kWh, f"{member.consumer_id}.d_minus", 2 * cL)
+    comp.add(s_E, mu_E, float(l_up.sum() - E_min), f"{member.consumer_id}.E_min", xm + cL)
 
     if len(pv_hours):
         mu_g_lo, mu_g_up = model.addMVar(len(pv_hours)), model.addMVar(len(pv_hours))
         price_pv = price[pv_hours] if isinstance(price, (gp.MVar, np.ndarray)) else np.asarray(price)[pv_hours]
         model.addConstr(-price_pv + cPV - mu_g_lo + mu_g_up == 0)                   # d L / d g_t
-        comp.add(g, mu_g_lo, G, f"{member.consumer_id}.g_lo")
-        comp.add(s_g_up, mu_g_up, G, f"{member.consumer_id}.g_up")
+        comp.add(g, mu_g_lo, G, f"{member.consumer_id}.g_lo", cPV)
+        comp.add(s_g_up, mu_g_up, G, f"{member.consumer_id}.g_up", max(xm - cPV, 1e-3))
         dual.update(mu_g_lo=mu_g_lo, mu_g_up=mu_g_up)
         dual_obj = dual_obj - mu_g_up @ G
     if member.has_battery:
@@ -330,7 +344,8 @@ class PricingModel:
         # leader's prices: one vector per group
         self.x = {g: m.addMVar(T, lb=lo, ub=hi, name=f"x_{g}") for g in sorted(set(self.group.values()))}
         # followers: one KKT system per member
-        self.follower = {cid: add_member_kkt(m, mem, self.x[self.group[cid]], self.comp, T)
+        price_max = float(hi.max()) if lo.min() >= 0 else None       # the tight big-M need 0 <= x_t <= price_max
+        self.follower = {cid: add_member_kkt(m, mem, self.x[self.group[cid]], self.comp, T, price_max)
                          for cid, mem in self.members.items()}
 
         # connection point (as in C)
